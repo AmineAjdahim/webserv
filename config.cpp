@@ -6,7 +6,7 @@
 /*   By: majdahim <majdahim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/19 12:09:41 by majdahim          #+#    #+#             */
-/*   Updated: 2022/06/19 18:59:18 by majdahim         ###   ########.fr       */
+/*   Updated: 2022/06/21 22:01:57 by majdahim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,3 +47,22 @@ void Config::set_client_max_body_size(std::string client_max_body_size)
     this->_client_max_body_size = client_max_body_size;
 }
 
+void Config::set_sock_fd(int sock_fd)
+{
+    this->_sock_fd = sock_fd;
+}
+
+int Config::get_sock_fd(void)
+{
+    return (this->_sock_fd);
+}
+
+void Config::set_client_fd(int client_fd)
+{
+    this->_client_fd = client_fd;
+}
+
+int Config::get_client_fd(void)
+{
+    return (this->_client_fd);
+}

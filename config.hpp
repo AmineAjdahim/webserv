@@ -6,7 +6,7 @@
 /*   By: majdahim <majdahim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/19 12:03:41 by majdahim          #+#    #+#             */
-/*   Updated: 2022/06/19 21:43:34 by majdahim         ###   ########.fr       */
+/*   Updated: 2022/06/21 22:01:02 by majdahim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,5 +78,12 @@ public:
     std::string get_client_max_body_size(void);
     std::string get_ip(void);
     std::string get_port(void);
+    int _sock_fd;
+    void set_sock_fd(int sock_fd);
+    int get_sock_fd(void);
+    int _client_fd;
+    void set_client_fd(int client_fd);
+    int get_client_fd(void);
+    
     // _location get_location(void);
 };

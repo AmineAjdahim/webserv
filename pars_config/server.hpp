@@ -6,7 +6,7 @@
 /*   By: majdahim <majdahim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/19 12:20:04 by majdahim          #+#    #+#             */
-/*   Updated: 2022/06/19 20:00:16 by majdahim         ###   ########.fr       */
+/*   Updated: 2022/06/20 18:04:05 by majdahim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,5 +20,6 @@ class Server : public Config
         Server(void);
         ~Server(void);
         void get_config(void);
+        std::vector<Server> get_data(void);
         
 };

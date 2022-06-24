@@ -6,7 +6,7 @@
 /*   By: majdahim <majdahim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/19 12:20:02 by majdahim          #+#    #+#             */
-/*   Updated: 2022/06/19 21:10:02 by majdahim         ###   ########.fr       */
+/*   Updated: 2022/06/20 18:41:21 by majdahim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,12 +25,12 @@ std::string removespaces(std::string str,char c)
     return (str);
 }
 
-int main()
+std::vector<Server> Server::get_data(void)
 {
     std::vector<Server> servers;
     int i = 0;
      std::ifstream config_file;
-    config_file.open("../config.conf");
+    config_file.open("config.conf");
     if(!config_file)
     {
         std::cout << "Error: config file not found" << std::endl;
@@ -123,24 +123,31 @@ int main()
             }
         }
     }
-    for (size_t i = 0; i < servers.size(); i++)
-    {
-    std::cout << "===============================" << std::endl;
-    std::cout << "           " << "Server : " << i << "            " << std::endl;
-    std::cout << "           " << "-------------"<< "            " << std::endl;
-        std::cout << "host = " << servers[i].get_ip() << std::endl;
-        std::cout << "port = "<<  servers[i].get_port() << std::endl;
-        std::cout << "client_max_body_size = " << servers[i].get_client_max_body_size() << std::endl;
-        // std::cout << server._locations[1]->get_path()<< std::endl;
-        for (size_t j = 0; j < servers[i]._locations.size(); j++)
-        {
-            std::cout << "       _________" << "location : " << j << "_________" << std::endl;
-            std::cout << "path = " << servers[i]._locations[j].get_path()<< std::endl;
-            std::cout << "root = " << servers[i]._locations[j].get_root()<< std::endl;
-            std::cout << "upload = " << servers[i]._locations[j].get_upload()<< std::endl;
-            std::cout << "cgi = " << servers[i]._locations[j].get_cgi()<< std::endl;
-            std::cout << "auto_index = " << servers[i]._locations[j].get_auto_index()<< std::endl;
-        }
-    }
-    return (0);
+    return (servers);
 }
+
+// int main()
+// {
+//     Server server;
+//     std::vector<Server> servers = server.get_data();
+//     for (size_t i = 0; i < servers.size(); i++)
+//     {
+//     std::cout << "===============================" << std::endl;
+//     std::cout << "           " << "Server : " << i << "            " << std::endl;
+//     std::cout << "           " << "-------------"<< "            " << std::endl;
+//         std::cout << "host = " << servers[i].get_ip() << std::endl;
+//         std::cout << "port = "<<  servers[i].get_port() << std::endl;
+//         std::cout << "client_max_body_size = " << servers[i].get_client_max_body_size() << std::endl;
+//         // std::cout << server._locations[1]->get_path()<< std::endl;
+//         for (size_t j = 0; j < servers[i]._locations.size(); j++)
+//         {
+//             std::cout << "       _________" << "location : " << j << "_________" << std::endl;
+//             std::cout << "path = " << servers[i]._locations[j].get_path()<< std::endl;
+//             std::cout << "root = " << servers[i]._locations[j].get_root()<< std::endl;
+//             std::cout << "upload = " << servers[i]._locations[j].get_upload()<< std::endl;
+//             std::cout << "cgi = " << servers[i]._locations[j].get_cgi()<< std::endl;
+//             std::cout << "auto_index = " << servers[i]._locations[j].get_auto_index()<< std::endl;
+//         }
+//     }
+//     return (0);
+// }
