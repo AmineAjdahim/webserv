@@ -6,12 +6,21 @@
 /*   By: majdahim <majdahim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/19 12:03:41 by majdahim          #+#    #+#             */
-/*   Updated: 2022/06/21 22:01:02 by majdahim         ###   ########.fr       */
+/*   Updated: 2022/06/28 16:18:47 by majdahim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <iostream>
 #include <vector>
+#include <sys/socket.h> // For socket functions
+#include <netinet/in.h> // For sockaddr_in
+#include <cstdlib>      // For exit() and EXIT_FAILURE
+#include <iostream>     // For cout
+#include <unistd.h>     // For read
+#include <arpa/inet.h>
+// #include "pars_config/server.hpp"
+#include <sys/select.h>
+#include <sys/time.h>
 
 class   _location {
     private:
@@ -62,13 +71,21 @@ class   _location {
         }  
 };
 
+
 class Config
 {
 public:
+    // typedef struct S_sockaddr_in {
+    //     sockaddr_in sockaddr;
+    //     sockaddr.sin_family
+    // } t_sockaddr_in;
     std::string _port;
     std::string _ip;
     std::vector<_location *> _locations;
     std::string _client_max_body_size;
+    sockaddr_in _sockaddr;
+    int _sockaddr_len;
+
     Config(void);
     virtual ~Config(void);
     void add_location(std::string path);
@@ -84,6 +101,8 @@ public:
     int _client_fd;
     void set_client_fd(int client_fd);
     int get_client_fd(void);
+    // t_sockaddr_in _sock_addr;
+    
     
     // _location get_location(void);
 };
