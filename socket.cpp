@@ -1,272 +1,233 @@
-#include <sys/socket.h> // For socket functions
-#include <netinet/in.h> // For sockaddr_in
-#include <cstdlib>      // For exit() and EXIT_FAILURE
-#include <iostream>     // For cout
-#include <unistd.h>     // For read
-#include <arpa/inet.h>
-#include "pars_config/server.hpp"
-#include <sys/select.h>
-#include <sys/time.h>
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   socket.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: majdahim <majdahim@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/06/30 08:15:53 by majdahim          #+#    #+#             */
+/*   Updated: 2022/06/30 14:20:58 by majdahim         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
+#include "socket.hpp"
+#include <sstream>
 
-#include <sys/types.h>
+socket_server::~socket_server(){}
+socket_server::socket_server(/* args */){}
 
-
-#include <unistd.h>
-
-
-int checkservers(int c ,std::vector<Server> servers)
+int socket_server::checkservers(int c ,std::vector<Server> servers)
 {
-  // Server server;
-  // std::vector<Server> servers = server.get_data();
   for (int i = 0; i < servers.size(); i++)
   {
-    if ((servers)[i].get_sock_fd() == c)
-    {
-      return i;
-    }
-  } 
-  // for (int i = 0; i < servers.; i++)
-  // {
-  //   if (servers[i].get_sock_fd() == i)
-  //   {
-  //     return i;
-  //   }
-  // }
+    if (servers[i].get_sock_fd() == c)
+    	return c;
+  }
   return -1;
 }
 
-
-int main()
+void socket_server::set_max_fd(int max_fd)
 {
-  Server server;
-  std::vector<Server> servers = server.get_data();
-  // Create a socket (IPv4, TCP)
-
-  //  for (size_t i = 0; i < servers.size(); i++)
-  //   {
-  //   std::cout << "===============================" << std::endl;
-  //   std::cout << "           " << "Server : " << i << "            " << std::endl;
-  //   std::cout << "           " << "-------------"<< "            " << std::endl;
-  //       std::cout << "host = " << servers[i].get_ip() << std::endl;
-  //       std::cout << "port = "<<  servers[i].get_port() << std::endl;
-  //       std::cout << "client_max_body_size = " << servers[i].get_client_max_body_size() << std::endl;
-  //       // std::cout << server._locations[1]->get_path()<< std::endl;
-  //       for (size_t j = 0; j < servers[i]._locations.size(); j++)
-  //       {
-  //           std::cout << "       _________" << "location : " << j << "_________" << std::endl;
-  //           std::cout << "path = " << servers[i]._locations[j].get_path()<< std::endl;
-  //           std::cout << "root = " << servers[i]._locations[j].get_root()<< std::endl;
-  //           std::cout << "upload = " << servers[i]._locations[j].get_upload()<< std::endl;
-  //           std::cout << "cgi = " << servers[i]._locations[j].get_cgi()<< std::endl;
-  //           std::cout << "auto_index = " << servers[i]._locations[j].get_auto_index()<< std::endl;
-  //       }
-  //   }
-
-  std::cout << "===============================" << std::endl;
-  fd_set current_socket, read_socket;
-
-  for (size_t i = 0; i < servers.size(); i++)
-  {
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1)
-    {
-      perror("socket");
-      exit(EXIT_FAILURE);
-    }
-    servers[i].set_sock_fd(sockfd);
-    sockaddr_in sockaddr;
-    sockaddr.sin_family = AF_INET;
-    sockaddr.sin_port = htons(atoi(servers[i].get_port().c_str()));
-    sockaddr.sin_addr.s_addr = inet_addr(servers[i].get_ip().c_str());
-    servers[i]._sockaddr = sockaddr;
-    servers[i]._sockaddr_len = sizeof(sockaddr);
-    if (bind(sockfd, (struct sockaddr *)&servers[i]._sockaddr, servers[i]._sockaddr_len) == -1)
-    {
-      perror("bind");
-      exit(EXIT_FAILURE);
-    }
-    {
-      std::cout << "Failed to bind " << errno << std::endl;
-      exit(EXIT_FAILURE);
-    }
-    // std::cout << servers[i].get_ip() << ":" << servers[i].get_port() << std::endl;
-    if (listen(sockfd, 50) < 0)
-    {
-      std::cout << "Failed to listen " << errno << std::endl;
-      exit(EXIT_FAILURE);
-    }
-  }
-  fd_set copyread_socket, copycurrent_socket;
-  // std::cout << servers.back().get_sock_fd() << std::endl;
-  int max_fd = -1;
-
-    FD_ZERO(&copyread_socket);
-    FD_ZERO(&copycurrent_socket);
-    FD_ZERO(&current_socket);
-    FD_ZERO(&read_socket);
-    for (size_t i = 0; i < servers.size(); i++)
-    {
-      FD_SET(servers[i].get_sock_fd(), &copyread_socket);
-      if(servers[i].get_sock_fd() > max_fd)
-      {
-        max_fd = servers[i].get_sock_fd();
-      }
-    }
-
-  while (1)
-  {
-    read_socket = copyread_socket;
-    current_socket = copycurrent_socket;
-    int ret = select(max_fd + 1, &read_socket, &current_socket, NULL, NULL);
-    if(ret == -1)
-    {
-      std::cout << "select error" << std::endl;
-      exit(EXIT_FAILURE);
-    }
-    char buffer[1024];
-    for (size_t i = 0; i < max_fd +1; i++)
-    {
-      if(FD_ISSET(i, &read_socket) || FD_ISSET(i, &current_socket))
-      {
-       
-          if(checkservers(i,servers) != -1)
-          {
-            int client_sockfd = accept(i, NULL, NULL);
-            // 
-            if (client_sockfd == -1)
-            {
-              perror("accept");
-              exit(EXIT_FAILURE);
-            }
-            // servers[].set_client_fd(client_sockfd);
-            FD_SET(client_sockfd, &copycurrent_socket);
-            if(client_sockfd > max_fd)
-            {
-              max_fd = client_sockfd;
-            }
-            std::cout << "New client connected" << std::endl;
-          }
-          else
-          {
-            if(FD_ISSET(i, &copycurrent_socket))
-            {
-              int rc = read(i, buffer,1024);
-              if (rc == -1)
-              {
-                perror("recv");
-                exit(EXIT_FAILURE);
-              }
-              if (rc == 0)
-              {
-                std::cout << "Client disconnected" << std::endl;
-                FD_CLR(i, &copycurrent_socket);
-                // FD_CLR(i, &copycurrent_socket);
-                close(i);
-              }
-              else
-              {
-                std::cout << "Received " << rc << " bytes" << std::endl;
-                std::cout << "Received : " << buffer << std::endl;
-                // std::cout << "Received : " << buffer << std::endl;
-              }
-              
-
-            }
-          
-        }
-      }
-    }
-     
-  }
-
-
-
+  this->max_fd = max_fd;
 }
-    // for (size_t i = 0; i < servers.size(); i++)
-    // {
-    //   if (FD_ISSET(servers[i].get_sock_fd(), &current_socket))
-    //   {
-    //     char buffer[1024];
-    //     int n = read(servers[i].get_sock_fd(), buffer, 1024);
-    //     if (n == 0)
-    //     {
-    //       std::cout << "Client disconnected" << std::endl;
-    //       close(servers[i].get_sock_fd());
-    //     }
-    //     else if (n < 0)
-    //     {
-    //       perror("read");
-    //       exit(EXIT_FAILURE);
-    //     }
-    //     else
-    //     {
-    //       std::cout << "Received " << n << " bytes" << std::endl;
-    //       std::cout << "Data: " << buffer << std::endl;
-    //     }
-    //   }
-    // }
 
+int socket_server::get_max_fd()
+{
+  return this->max_fd;
+}
 
+void request(char *buffer)
+{
+  std::cout << buffer << std::endl;
+  memset(buffer,0,1024);
+}
 
-  //   for(size_t i = 0; i < servers.size(); i++)
-  //   {
-  //     FD_SET(servers[i].get_sock_fd(), &copyread_socket);
-  //     FD_SET(servers[i].get_sock_fd(), &copycurrent_socket);
-  //   }
-  //   read_socket = copyread_socket;
-  //   current_socket = copycurrent_socket;
-  //   // for (size_t i = 0; i < servers.size(); i++)
-  //   // {
-  //   //   FD_SET(servers[i].get_sock_fd(), &read_socket);
-  //   // }
-  //   int max_fd = FD_SETSIZE;
-  //    if(int rt = select(FD_SETSIZE , &read_socket, &current_socket, NULL, NULL) < 0)
-  //   {
-  //     std::cout << "Failed to select " << errno << std::endl;
-  //     exit(EXIT_FAILURE);
-  //   }
-  //   std::cout << "servers        :" << servers.size() << std::endl;
-    // for (size_t i = 0; i < servers.size(); i++)
-    // {
-    //   if (FD_ISSET(servers[i].get_sock_fd(), &read_socket))
-    //   {
+int socket_server::socketserver(int i)
+{
+	int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sock_fd == -1)
+	{
+		std::cout << "Error: socket()" << std::endl;
+		return -1;
+	}
+	if (fcntl(sock_fd, F_SETFL, O_NONBLOCK) == -1)
+	{
+		std::cout << "Error: fcntl()" << std::endl;
+		return -1;
+	}
+	this->Servers[i].set_sock_fd(sock_fd);
+	return sock_fd;
+}
 
-    //       // std::cout << "===============================" << std::endl;
-    //     std::cout << "           " << "Server : " << i << "            "<< servers[i].get_sock_fd() <<  << std::endl;
-        
-    //     // int client_sockfd = accept(servers[i].get_sock_fd(), NULL, NULL);
-    //     // if (client_sockfd == -1)
-    //     // {
-    //     //   perror("accept");
-    //     //   exit(EXIT_FAILURE);
-    //     // }
-    //     // FD_SET(client_sockfd, &current_socket);
-    //     // if (client_sockfd > max_fd)
-    //     // {
-    //     //   max_fd = client_sockfd;
-    //     // }
-    //     // std::cout << "Client connected" << std::endl;
-    //     // std::cout << " " << std::endl;
-    //     // char buffer[1024];
-    //     // int n = read(client_sockfd, buffer, 1024);
-    //     // if (n == -1)
-    //     // {
-    //     //   perror("read");
-    //     //   exit(EXIT_FAILURE);
-    //     // }
-    //     // // std::cout << " " << buffer << std::endl;
-    //     // // std::cout << " " << buffer << std::endl;
-    //     // std::cout << "Client request : " << buffer << std::endl;
-    //     // std::cout << " " << std::endl;
-    //     // std::cout << " " << std::endl;
-        char buffer1[] = "HTTP/1.1 200 OK\r\n"
-                         "Content-Type: text/html\r\n"
-                         "Connection: close\r\n"
-                         "\r\n"
-                         "<html><body><h1>amine ajdahin</h1></body></html>";
-        // send(client_sockfd, buffer1, strlen(buffer1), 0);
-    //   }
-    // }
-  // }
-// }
+int socket_server::bindserver(int i)
+{
+	sockaddr_in sockaddr;
+	sockaddr.sin_family = AF_INET;
+	sockaddr.sin_port = htons(atoi(this->Servers[i].get_port().c_str()));
+	sockaddr.sin_addr.s_addr = inet_addr(this->Servers[i].get_ip().c_str());
+	this->Servers[i]._sockaddr = sockaddr;
+	this->Servers[i]._sockaddr_len = sizeof(sockaddr);
+	int bind_ret = bind(this->Servers[i].get_sock_fd(), (struct sockaddr *)&this->Servers[i]._sockaddr, this->Servers[i]._sockaddr_len);
+	if (bind_ret == -1)
+	{
+		std::cout << "Error: bind()" << std::endl;
+		return -1;
+	}
+	return 0;
+}
+
+int socket_server::listenserver(int i)
+{
+	int listen_ret = listen(this->Servers[i].get_sock_fd(), 5);
+	if (listen_ret == -1)
+	{
+		std::cout << "Error: listen()" << std::endl;
+		return -1;
+	}
+	return 0;
+}
+
+int socket_server::create_socket(void)
+{
+	this->Servers = this->get_data();
+	// std::cout << this->Servers.size() << std::endl;
+
+	for (size_t i = 0; i < this->Servers.size(); i++)
+	{
+		int sock_fd = this->socketserver(i); // create socket
+    	this->bindserver(i); // bind socket
+		this->listenserver(i); // listen socket
+		std::cout << "========== created server ==========" << std::endl;
+	}
+	return 0;
+}
+
+void socket_server::inisialize_for_select()
+{
+	this->max_fd = 0;
+
+    FD_ZERO(&this->readfds);
+    FD_ZERO(&this->writefds);
+	for(size_t i = 0; i < this->Servers.size(); i++)
+    {
+		// std::cout << "select_socket: " << this->Servers[i].get_sock_fd() << std::endl;
+        FD_SET(this->Servers[i].get_sock_fd(), &this->readfds);
+        if (this->Servers[i].get_sock_fd() > this->max_fd)
+            this->max_fd = this->Servers[i].get_sock_fd();
+    }
+}
+
+void socket_server::parse_request(char *buffer)
+{
+	std::string request = buffer;
+	std::stringstream ss(request);
+	std::string token;
+	std::vector<std::string> tokens;
+	while (std::getline(ss, token, ' '))
+	{
+		std::cout << token << std::endl;
+		tokens.push_back(token);
+	}
+	// std::cout << "Request: " << tokens[0] << std::endl;
+	// if (tokens[0] == "GET")
+	// {
+	// 	std::cout << "GET" << std::endl;
+	// }
+	// else if (tokens[0] == "POST")
+	// {
+	// 	std::cout << "POST" << std::endl;
+	// }
+	// else
+	// {
+	// 	std::cout << "Unknown request" << std::endl;
+	// }
+}
+
+void socket_server::read_request(int i)
+{
+	char buffer[1024];
+	int recv_ret = recv(i, buffer, 1024, 0);
+	// FD_CLR(i,&this->readfds);
+	// FD_SET(i,&this->writefds);
+	if (recv_ret == -1)
+	{
+		std::cout << "Error: recv()" << std::endl;
+		return ;
+	}
+	if (recv_ret == 0)
+	{
+		std::cout << "Client " << i << " disconnected" << std::endl;
+		FD_CLR(i, &this->readfds);
+		close(i);
+	}
+	// this->parse_request(buffer);
+	std::cout << buffer << std::endl;
+  	memset(buffer,'\0',1024);
+}
+
+void	socket_server::send_response(int i)
+{
+	char buffer1[] = "HTTP/1.1 200 OK\r\n"
+					 "Content-Type: text/html\r\n"
+					 "Connection: close\r\n"
+					 "\r\n"
+					 "<html><body><h1>amine ajdahin</h1></body></html>";
+	int send_ret = send(i, buffer1, strlen(buffer1), 0);
+	close(i);
+	if (send_ret == -1)
+	{
+		std::cout << "Error: send()" << std::endl;
+		return ;
+	}
+	std::cout << "sent to client " << i << std::endl;
+	FD_CLR(i, &this->writefds);
+}
+
+void socket_server::accept_client(int i)
+{
+	int client_fd = accept(i, (struct sockaddr *)&this->Servers[i]._sockaddr, (socklen_t *)&this->Servers[i]._sockaddr_len);
+	if (client_fd == -1)
+	{
+		std::cout << "Error: accept()" << std::endl;
+		return ;
+	}
+	this->Servers[i].set_client_fd(client_fd);
+	std::cout << "accepted client " << i << std::endl;
+	FD_SET(client_fd, &this->readfds);
+	// FD_SET(client_fd, &writefds);
+	if (client_fd > this->max_fd)
+		this->max_fd = client_fd;
+}
+
+int socket_server::select_socket()
+{
+	this->inisialize_for_select();
+    fd_set tmp_readfds, tmp_writefds;
+	while(1)
+    {
+        tmp_readfds = this->readfds;
+        tmp_writefds = this->writefds;
+        int select_ret = select(this->max_fd + 1, &tmp_readfds, &tmp_writefds, NULL, NULL);
+        if (select_ret == -1)
+        {
+            std::cout << "Error: select()" << std::endl;
+            return -1;
+        }
+		for(size_t i = 0; i < this->max_fd + 1; i++)
+        {
+            if (FD_ISSET(i, &tmp_readfds))
+            {
+                if(this->checkservers(i,this->Servers) != -1)
+					this->accept_client(i);
+                else
+                {
+                  if(FD_ISSET(i, &this->readfds))
+					this->read_request(i);
+                  if(FD_ISSET(i,&this->writefds))
+					this->send_response(i);
+                }
+            }
+        }
+	}
+	return 0;
+}
