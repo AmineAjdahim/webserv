@@ -6,12 +6,13 @@
 /*   By: majdahim <majdahim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/30 08:15:53 by majdahim          #+#    #+#             */
-/*   Updated: 2022/06/30 14:20:58 by majdahim         ###   ########.fr       */
+/*   Updated: 2022/06/30 21:07:02 by majdahim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "socket.hpp"
 #include <sstream>
+#include "request_data.hpp"
 
 socket_server::~socket_server(){}
 socket_server::socket_server(/* args */){}
@@ -24,6 +25,12 @@ int socket_server::checkservers(int c ,std::vector<Server> servers)
     	return c;
   }
   return -1;
+}
+
+std::string socket_server::removespaces(std::string str,char c)
+{
+	str.erase(remove(str.begin(),str.end(), c),str.end());
+	return (str);
 }
 
 void socket_server::set_max_fd(int max_fd)
@@ -71,7 +78,7 @@ int socket_server::bindserver(int i)
 	if (bind_ret == -1)
 	{
 		std::cout << "Error: bind()" << std::endl;
-		return -1;
+		exit(1);
 	}
 	return 0;
 }
@@ -90,8 +97,6 @@ int socket_server::listenserver(int i)
 int socket_server::create_socket(void)
 {
 	this->Servers = this->get_data();
-	// std::cout << this->Servers.size() << std::endl;
-
 	for (size_t i = 0; i < this->Servers.size(); i++)
 	{
 		int sock_fd = this->socketserver(i); // create socket
@@ -117,35 +122,77 @@ void socket_server::inisialize_for_select()
     }
 }
 
-void socket_server::parse_request(char *buffer)
+void socket_server::parse_request(char *buffer,int recv_ret)
 {
-	std::string request = buffer;
-	std::stringstream ss(request);
-	std::string token;
+	response res;
+	std::string request = "";
+	request = buffer;
 	std::vector<std::string> tokens;
-	while (std::getline(ss, token, ' '))
+
+	int i = request.find("\r\n");
+	while (i != std::string::npos)
 	{
-		std::cout << token << std::endl;
-		tokens.push_back(token);
+		tokens.push_back(request.substr(0, i));
+		request.erase(0, i + 2);
+		i = request.find("\r\n");
 	}
-	// std::cout << "Request: " << tokens[0] << std::endl;
-	// if (tokens[0] == "GET")
-	// {
-	// 	std::cout << "GET" << std::endl;
-	// }
-	// else if (tokens[0] == "POST")
-	// {
-	// 	std::cout << "POST" << std::endl;
-	// }
-	// else
-	// {
-	// 	std::cout << "Unknown request" << std::endl;
-	// }
+	if(tokens.size() > 0)
+	{
+		std::string content_type = "";
+		std::string content_length = "";
+		std::string method = "";
+		std::string request_type = "";
+		for (int i = 0; i < tokens.size(); i++)
+		{
+			if (tokens[i].find("Content-Type:") != std::string::npos)
+			{
+				std::string content_type_tmp = tokens[i];
+				content_type_tmp = removespaces(content_type_tmp,' ');
+				content_type = content_type_tmp.substr(tokens[i].find(":") + 1);
+			}
+			if(tokens[i].find("Content-Length:") != std::string::npos)
+			{
+				std::string content_length_tmp = tokens[i];
+				content_length_tmp = removespaces(content_length_tmp,' ');
+				content_length = content_length_tmp.substr(tokens[i].find(":") + 1);
+			}
+			if(tokens[i].find("HTTP/1.1") != std::string::npos)
+			{
+				std::stringstream ss(tokens[i]);
+				std::string token;
+				//========get method==========
+				std::getline(ss, token, ' ');
+				res.set_Request_Method(token);
+				//========get path==========
+				std::getline(ss, token, ' ');
+				res.set_Request_Url(token);
+				//========get request type==========
+				std::getline(ss, token, ' ');
+				res.set_Request_http_version(token);		
+				// request_type = tokens[i];
+			}
+		}
+		std::cout << "==========line one=============" << std::endl;
+		std::cout << "    method    : " << res.get_Request_Method() << std::endl;
+		std::cout << "     path     : " << res.get_Request_Url() << std::endl;
+		std::cout << " http version : " << res.get_Request_http_version() << std::endl;
+		std::cout << "==========line two=============" << std::endl;
+		std::cout << " content_type : " << content_type << std::endl;
+		std::cout << " content_length : " << content_length << std::endl;
+	}
+	std::cout << "==========line three=============" << std::endl;
+	std::cout << " read_ret : " << recv_ret << std::endl;
+
+
+	
+	// find 
+	
 }
 
 void socket_server::read_request(int i)
 {
 	char buffer[1024];
+  	memset(buffer,'\0',1024);
 	int recv_ret = recv(i, buffer, 1024, 0);
 	// FD_CLR(i,&this->readfds);
 	// FD_SET(i,&this->writefds);
@@ -160,9 +207,8 @@ void socket_server::read_request(int i)
 		FD_CLR(i, &this->readfds);
 		close(i);
 	}
-	// this->parse_request(buffer);
-	std::cout << buffer << std::endl;
-  	memset(buffer,'\0',1024);
+	this->parse_request(buffer,recv_ret);
+	// std::cout << buffer << std::endl;
 }
 
 void	socket_server::send_response(int i)
@@ -192,7 +238,7 @@ void socket_server::accept_client(int i)
 		return ;
 	}
 	this->Servers[i].set_client_fd(client_fd);
-	std::cout << "accepted client " << i << std::endl;
+	// std::cout << "accepted client " << i << std::endl;
 	FD_SET(client_fd, &this->readfds);
 	// FD_SET(client_fd, &writefds);
 	if (client_fd > this->max_fd)
