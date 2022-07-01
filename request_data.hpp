@@ -6,7 +6,7 @@
 /*   By: majdahim <majdahim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/30 20:19:52 by majdahim          #+#    #+#             */
-/*   Updated: 2022/06/30 20:20:50 by majdahim         ###   ########.fr       */
+/*   Updated: 2022/07/01 18:44:57 by majdahim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,11 +17,13 @@ class response
     private:
         std::string  _Request_Url; // path url exemle 127.0.0.1:8080/index.html
         std::string  _Request_Method; // GET POST PUT DELETE etc.
-        std::string  _Request_Body; // Path body exemle ./index.html
         std::string  _Request_Header;
         std::string  _Request_qwery; // Data sent in the url exemle ?name=amine&age=20
         std::string  _Request_http_version; // http version exemle 1.1
+        std::string content_type; // content type exemle text/html
+        std::string content_length; // content length exemle 100
     public:
+        std::string  _Request_Body; // Path body exemle ./index.html
         response();
         ~response();
         void set_Request_Url(std::string url);
@@ -30,18 +32,23 @@ class response
         void set_Request_Header(std::string header);
         void set_Request_qwery(std::string qwery);
         void set_Request_http_version(std::string http_version);
+        void set_content_type(std::string content_type);
+        void set_content_length(std::string content_length);
         std::string get_Request_Url();
         std::string get_Request_Method();
         std::string get_Request_Body();
         std::string get_Request_Header();
         std::string get_Request_qwery();
         std::string get_Request_http_version();
+        std::string get_content_type();
+        int get_content_length();
         char    *buffer();
 };
 response::response()
 {
     _Request_Url = "";
-    _Request_Method = "HTTP/1.1 200 OK\r\n";
+    
+    _Request_Method = "";
     _Request_Body = "\r\n"
                     "<html><body><h1>amine ajdahin</h1></body></html>";
     _Request_Header = "Content-Type: text/html\r\n"
@@ -113,4 +120,12 @@ std::string response::get_Request_qwery()
 std::string response::get_Request_http_version()
 {
     return _Request_http_version;
+}
+std::string response::get_content_type()
+{
+    return content_type;
+}
+void    response::set_content_type(std::string content_type)
+{
+    this->content_type = content_type;
 }

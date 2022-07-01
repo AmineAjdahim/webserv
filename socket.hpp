@@ -6,7 +6,7 @@
 /*   By: majdahim <majdahim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/25 18:10:47 by majdahim          #+#    #+#             */
-/*   Updated: 2022/06/30 21:00:16 by majdahim         ###   ########.fr       */
+/*   Updated: 2022/07/01 19:15:00 by majdahim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,8 @@ public:
     void set_max_fd(int max_fd);
     int get_max_fd();
     fd_set readfds, writefds;
+    std::string requestbuffer;
+    std::string content_length;
 
     socket_server(/* args */);
     ~socket_server();
@@ -50,8 +52,8 @@ public:
     void read_request(int i); // read request from socket server
     void send_response(int i); // response to socket server
     void accept_client(int i); // accept client from socket server
-    void parse_request(char *buffer,int recv_ret); // parse request from socket server
-    
+    void parse_request(char *buffer,int recv_ret,int b); // parse request from socket server
+    int total;
     int create_socket(void);
     int select_socket(void);
     int checkservers(int c,std::vector<Server> servers);

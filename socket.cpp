@@ -6,16 +6,26 @@
 /*   By: majdahim <majdahim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/30 08:15:53 by majdahim          #+#    #+#             */
-/*   Updated: 2022/06/30 21:07:02 by majdahim         ###   ########.fr       */
+/*   Updated: 2022/07/01 20:01:32 by majdahim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "socket.hpp"
 #include <sstream>
 #include "request_data.hpp"
+#include <filesystem>
+
+
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <fstream>
+#include <filesystem>
 
 socket_server::~socket_server(){}
-socket_server::socket_server(/* args */){}
+socket_server::socket_server(/* args */){
+	total = 0;
+}
 
 int socket_server::checkservers(int c ,std::vector<Server> servers)
 {
@@ -97,6 +107,7 @@ int socket_server::listenserver(int i)
 int socket_server::create_socket(void)
 {
 	this->Servers = this->get_data();
+	
 	for (size_t i = 0; i < this->Servers.size(); i++)
 	{
 		int sock_fd = this->socketserver(i); // create socket
@@ -122,15 +133,15 @@ void socket_server::inisialize_for_select()
     }
 }
 
-void socket_server::parse_request(char *buffer,int recv_ret)
+void socket_server::parse_request(char *buffer,int recv_ret,int b)
 {
 	response res;
 	std::string request = "";
-	request = buffer;
+	request.append(buffer,recv_ret);
 	std::vector<std::string> tokens;
 
 	int i = request.find("\r\n");
-	while (i != std::string::npos)
+	while (i != std::string::npos && !request.empty())
 	{
 		tokens.push_back(request.substr(0, i));
 		request.erase(0, i + 2);
@@ -149,12 +160,14 @@ void socket_server::parse_request(char *buffer,int recv_ret)
 				std::string content_type_tmp = tokens[i];
 				content_type_tmp = removespaces(content_type_tmp,' ');
 				content_type = content_type_tmp.substr(tokens[i].find(":") + 1);
+				res.set_content_type(content_type);
 			}
 			if(tokens[i].find("Content-Length:") != std::string::npos)
 			{
 				std::string content_length_tmp = tokens[i];
 				content_length_tmp = removespaces(content_length_tmp,' ');
-				content_length = content_length_tmp.substr(tokens[i].find(":") + 1);
+				this->content_length = content_length_tmp.substr(tokens[i].find(":") + 1);
+				// res.set_content_length(content_length)÷;
 			}
 			if(tokens[i].find("HTTP/1.1") != std::string::npos)
 			{
@@ -177,24 +190,38 @@ void socket_server::parse_request(char *buffer,int recv_ret)
 		std::cout << "     path     : " << res.get_Request_Url() << std::endl;
 		std::cout << " http version : " << res.get_Request_http_version() << std::endl;
 		std::cout << "==========line two=============" << std::endl;
-		std::cout << " content_type : " << content_type << std::endl;
-		std::cout << " content_length : " << content_length << std::endl;
+		std::cout << " content_type : " << res.get_content_type() << std::endl;
+		std::cout << " content_length : " << this->content_length << std::endl;
 	}
-	std::cout << "==========line three=============" << std::endl;
-	std::cout << " read_ret : " << recv_ret << std::endl;
+	// std::cout << "==========================" << std::endl;
+	this->total += request.length();
+	this->requestbuffer.append(request);
+	if(this->total >= atoi(this->content_length.c_str()))
+	{
+		std::ofstream myfile;
+		myfile.open("request",std::ios::out | std::ios::binary);
+		myfile << this->requestbuffer;
+		myfile.close();
+		FD_CLR(b,&this->readfds);
+		FD_SET(b,&this->writefds);
+	}
 
 
 	
-	// find 
+	
 	
 }
 
 void socket_server::read_request(int i)
 {
 	char buffer[1024];
-  	memset(buffer,'\0',1024);
-	int recv_ret = recv(i, buffer, 1024, 0);
-	// FD_CLR(i,&this->readfds);
+  	// memset(buffer,'\0',1024);
+	int recv_ret = read(i, buffer, 1024);
+
+	// std::cout<<recv_ret<<std::endl;
+	// this->requestbuffer.append(buffer,recv_ret);
+
+		// FD_CLR(i,&this->readfds);
 	// FD_SET(i,&this->writefds);
 	if (recv_ret == -1)
 	{
@@ -207,7 +234,7 @@ void socket_server::read_request(int i)
 		FD_CLR(i, &this->readfds);
 		close(i);
 	}
-	this->parse_request(buffer,recv_ret);
+	this->parse_request(buffer,recv_ret,i);
 	// std::cout << buffer << std::endl;
 }
 
